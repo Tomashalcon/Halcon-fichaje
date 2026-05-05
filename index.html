@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Halcon Supplies — Fichaje</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,15 +14,41 @@
       --accent: #1a472a; --accent-light: #e8f0eb;
       --accent2: #1e3a5f; --accent2-light: #e8edf5;
       --danger: #7a1f1f; --danger-light: #fdf0f0;
+      --gold: #c8a84b; --gold-light: #faf3e0;
       --radius: 10px; --radius-lg: 16px;
     }
     body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-    .site-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; gap: 12px; }
+
+    .site-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
     .logo-mark { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
     .logo-mark svg { width: 20px; height: 20px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .logo-text { font-size: 15px; font-weight: 600; }
     .logo-sub { font-size: 12px; color: var(--muted); }
-    #admin-view { padding: 1.5rem; max-width: 960px; margin: 0 auto; }
+    .header-user { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+    .btn-logout { font-size: 12px; color: var(--muted); background: none; border: none; cursor: pointer; text-decoration: underline; font-family: 'DM Sans', sans-serif; }
+
+    /* VIEWS */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── REGISTRO INICIAL ── */
+    #view-registro { min-height: calc(100vh - 65px); display: none; align-items: center; justify-content: center; padding: 2rem 1rem; }
+    #view-registro.active { display: flex; }
+    .registro-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 380px; }
+    .registro-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .registro-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.5; }
+    .field { margin-bottom: 1rem; }
+    .field label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 5px; }
+    .field input, .field select { width: 100%; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 15px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface2); color: var(--text); outline: none; }
+    .field input:focus, .field select:focus { border-color: var(--accent); background: white; }
+    .btn-primary { width: 100%; padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; border: none; border-radius: var(--radius); background: var(--accent); color: white; cursor: pointer; margin-top: 0.5rem; }
+    .btn-primary:hover { background: #15381f; }
+    .error-msg { font-size: 12px; color: var(--danger); margin-top: 8px; display: none; }
+
+    /* ── ADMIN VIEW ── */
+    #view-admin { padding: 1.5rem; max-width: 960px; margin: 0 auto; }
     .section-title { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
     .branches-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
     .branch-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
@@ -34,11 +59,35 @@
     .qr-url { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); text-align: center; word-break: break-all; padding: 6px 8px; background: var(--surface2); border-radius: 6px; width: 100%; }
     .btn-sim { width: 100%; padding: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; border: 1px solid var(--border); background: var(--surface2); color: var(--text); border-radius: var(--radius); cursor: pointer; }
     .btn-sim:hover { background: var(--border); }
-    #checkin-view { display: none; min-height: calc(100vh - 65px); flex-direction: column; align-items: center; padding: 2rem 1rem; gap: 1rem; }
+
+    /* ── ENCARGADO VIEW ── */
+    #view-encargado { padding: 1.5rem; max-width: 680px; margin: 0 auto; }
+    .enc-header { margin-bottom: 1.5rem; }
+    .enc-header h2 { font-size: 20px; font-weight: 600; }
+    .enc-header p { font-size: 13px; color: var(--muted); }
+    .registros-table { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .table-header { display: grid; grid-template-columns: 1fr 80px 80px 90px; padding: 10px 14px; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; background: var(--surface2); border-bottom: 1px solid var(--border); }
+    .table-row { display: grid; grid-template-columns: 1fr 80px 80px 90px; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border); align-items: center; }
+    .table-row:last-child { border-bottom: none; }
+    .table-row:nth-child(even) { background: #fafaf8; }
+    .tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 100px; }
+    .tag-ent { background: var(--accent-light); color: var(--accent); }
+    .tag-sal { background: var(--accent2-light); color: var(--accent2); }
+    .empty-state { padding: 2rem; text-align: center; color: var(--muted); font-size: 14px; }
+    .date-filter { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
+    .date-filter input { padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); outline: none; }
+    .date-filter input:focus { border-color: var(--accent); }
+    .btn-sec { padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius); cursor: pointer; }
+    .btn-sec:hover { background: var(--surface2); }
+
+    /* ── CHECKIN VIEW ── */
+    #view-checkin { display: none; min-height: calc(100vh - 65px); flex-direction: column; align-items: center; padding: 2rem 1rem; gap: 1rem; }
+    #view-checkin.active { display: flex; }
     .checkin-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; width: 100%; max-width: 380px; }
     .branch-header { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; text-align: center; }
     .branch-header .name { font-size: 20px; font-weight: 600; }
     .branch-header .addr { font-size: 13px; color: var(--muted); }
+    .empleado-pill { background: var(--accent-light); color: var(--accent); border-radius: var(--radius); padding: 10px 14px; font-size: 14px; font-weight: 500; width: 100%; max-width: 380px; text-align: center; }
     .loc-pill { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 500; width: 100%; max-width: 380px; }
     .loc-wait { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
     .loc-ok { background: var(--accent-light); color: var(--accent); border: 1px solid #b6d4be; }
@@ -48,10 +97,7 @@
     .loc-ok .loc-dot { background: var(--accent); }
     .loc-err .loc-dot { background: var(--danger); }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    .input-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; display: block; }
-    .name-input { width: 100%; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 15px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface2); color: var(--text); outline: none; margin-bottom: 1rem; }
-    .name-input:focus { border-color: var(--accent); background: white; }
-    .btn-group { display: flex; flex-direction: column; gap: 8px; }
+    .btn-group { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 380px; }
     .btn-action { width: 100%; padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; border: none; border-radius: var(--radius); cursor: pointer; }
     .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-entrada { background: var(--accent); color: white; }
@@ -63,41 +109,94 @@
     .reg-item:last-child { border-bottom: none; }
     .reg-name { font-weight: 500; }
     .reg-meta { font-size: 12px; color: var(--muted); }
-    .tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 100px; }
-    .tag-ent { background: var(--accent-light); color: var(--accent); }
-    .tag-sal { background: var(--accent2-light); color: var(--accent2); }
+
     .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: white; padding: 12px 20px; border-radius: var(--radius); font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.25s; pointer-events: none; white-space: nowrap; z-index: 100; }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .encargado-badge { background: var(--gold-light); color: #8a6800; border: 1px solid #e8d48a; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px; letter-spacing: 0.04em; }
   </style>
 </head>
 <body>
+
 <header class="site-header">
-  <div class="logo-mark">
-    <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+  <div class="header-left">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">Halcon Supplies</div>
+      <div class="logo-sub">Sistema de fichaje</div>
+    </div>
   </div>
-  <div>
-    <div class="logo-text">Halcon Supplies</div>
-    <div class="logo-sub">Sistema de fichaje</div>
+  <div class="header-user" id="header-user" style="display:none;">
+    <div class="avatar" id="header-avatar">?</div>
+    <span id="header-name"></span>
+    <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
   </div>
 </header>
 
-<div id="admin-view">
+<!-- REGISTRO INICIAL -->
+<div id="view-registro" class="active">
+  <div class="registro-card">
+    <h2>Bienvenido/a</h2>
+    <p>Primera vez usando el sistema. Ingresá tus datos para registrarte. Solo se hace una vez.</p>
+    <div class="field">
+      <label>Nombre completo</label>
+      <input type="text" id="reg-nombre" placeholder="Ej: Juan García" autocomplete="name" />
+    </div>
+    <div class="field">
+      <label>DNI</label>
+      <input type="number" id="reg-dni" placeholder="Ej: 38456789" />
+    </div>
+    <div class="field">
+      <label>Sucursal</label>
+      <select id="reg-sucursal">
+        <option value="">Seleccioná tu sucursal</option>
+        <option value="quilmes">Quilmes</option>
+        <option value="lomas">Lomas de Zamora</option>
+        <option value="laplata">La Plata</option>
+      </select>
+    </div>
+    <div class="error-msg" id="reg-error">Por favor completá todos los campos.</div>
+    <button class="btn-primary" onclick="registrarUsuario()">Registrarme</button>
+  </div>
+</div>
+
+<!-- ADMIN (panel con QR) -->
+<div id="view-admin" class="view">
   <div style="padding: 1.5rem 0 1rem;">
     <p class="section-title">Sucursales — Escaneá el QR para fichar</p>
     <div class="branches-grid" id="branches-grid"></div>
   </div>
 </div>
 
-<div id="checkin-view">
+<!-- ENCARGADO -->
+<div id="view-encargado" class="view">
+  <div class="enc-header">
+    <h2 id="enc-titulo">Registros</h2>
+    <p id="enc-subtitulo" style="color:var(--muted); font-size:13px;"></p>
+  </div>
+  <div class="date-filter">
+    <input type="date" id="enc-fecha" />
+    <button class="btn-sec" onclick="renderEncargado()">Filtrar</button>
+    <button class="btn-sec" onclick="filtrarHoy()">Hoy</button>
+  </div>
+  <div class="registros-table" id="enc-tabla"></div>
+</div>
+
+<!-- CHECKIN -->
+<div id="view-checkin">
   <div class="checkin-card">
     <div class="branch-header">
-      <div class="branch-badge">Sucursal</div>
+      <div class="branch-badge" style="font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-light);padding:3px 10px;border-radius:100px;">Sucursal</div>
       <div class="name" id="ci-name">—</div>
       <div class="addr" id="ci-addr">—</div>
     </div>
-    <label class="input-label" for="empleado-input">Nombre y apellido</label>
-    <input class="name-input" id="empleado-input" type="text" placeholder="Ej: Juan García" autocomplete="name" />
-    <div class="btn-group">
+    <div style="text-align:center; margin-bottom:1rem;">
+      <div style="font-size:13px; color:var(--muted);">Fichando como</div>
+      <div style="font-size:16px; font-weight:600;" id="ci-empleado">—</div>
+    </div>
+    <div class="btn-group" style="width:100%;">
       <button class="btn-action btn-entrada" id="btn-entrada" disabled onclick="fichar('entrada')">↑ Registrar entrada</button>
       <button class="btn-action btn-salida" id="btn-salida" disabled onclick="fichar('salida')">↓ Registrar salida</button>
     </div>
@@ -107,33 +206,174 @@
     <span id="loc-text">Verificando ubicación GPS...</span>
   </div>
   <div class="registros-wrap" id="registros-wrap" style="display:none;">
-    <div class="reg-header">Registros de hoy</div>
+    <div class="reg-header">Tus registros de hoy</div>
     <div id="reg-items"></div>
   </div>
-  <button class="btn-back" onclick="volverAdmin()">← Volver al panel</button>
+  <button class="btn-back" onclick="volverInicio()">← Inicio</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 const BASE_URL = 'https://project-pht7z.vercel.app/';
+const RADIO = 30;
+
 const SUCURSALES = [
   { id: 'lomas',   nombre: 'Lomas de Zamora', direccion: 'España 185, entre Loria y Gorriti',               lat: -34.7628408, lng: -58.4001215 },
   { id: 'quilmes', nombre: 'Quilmes',          direccion: 'Av. Mitre 980, entre Matienzo y Ortiz de Ocampo', lat: -34.7265727, lng: -58.2500608 },
   { id: 'laplata', nombre: 'La Plata',         direccion: 'Calle 48 N°675, entre 8 y 9',                     lat: -34.9150995, lng: -57.9528797 }
 ];
-const RADIO = 100;
+
+// Empleados registrados con su sucursal y rol
+const EMPLEADOS_VALIDOS = [
+  { nombre: 'Francisco', dni: null, sucursal: 'quilmes', rol: 'empleado' },
+  { nombre: 'Tomas',     dni: null, sucursal: 'quilmes', rol: 'encargado' },
+  { nombre: 'Alan',      dni: null, sucursal: 'lomas',   rol: 'empleado' },
+  { nombre: 'Marcos',    dni: null, sucursal: 'lomas',   rol: 'empleado' },
+  { nombre: 'Abel',      dni: null, sucursal: 'lomas',   rol: 'encargado' },
+  { nombre: 'Marina',    dni: null, sucursal: 'laplata', rol: 'encargado' },
+  { nombre: 'Milagros',  dni: null, sucursal: 'laplata', rol: 'empleado' },
+  { nombre: 'Teo',       dni: null, sucursal: 'laplata', rol: 'empleado' },
+  { nombre: 'Julian',    dni: null, sucursal: 'laplata', rol: 'empleado' },
+];
+
 let registros = JSON.parse(localStorage.getItem('halcon_registros') || '[]');
+let usuarioActual = JSON.parse(localStorage.getItem('halcon_usuario') || 'null');
 let sucursalActiva = null;
 let gpsOk = false;
 
-function qrUrl(id) { return BASE_URL + '?s=' + id; }
+// ── INIT ──
+function init() {
+  const sid = new URLSearchParams(window.location.search).get('s');
 
+  if (sid) {
+    // Llegó escaneando QR
+    const s = SUCURSALES.find(x => x.id === sid);
+    if (!s) { mostrarView('view-admin'); return; }
+    sucursalActiva = s;
+
+    if (!usuarioActual) {
+      // Pre-seleccionar sucursal en el registro
+      mostrarView('view-registro');
+      const sel = document.getElementById('reg-sucursal');
+      sel.value = sid;
+      sel.disabled = true;
+    } else {
+      // Ya registrado → validar que sea su sucursal
+      if (usuarioActual.sucursal !== sid) {
+        showToast('Este QR no corresponde a tu sucursal');
+        setTimeout(() => mostrarCheckin(s, true), 1500);
+      } else {
+        mostrarCheckin(s);
+      }
+    }
+  } else {
+    // Sin QR → home
+    if (!usuarioActual) {
+      mostrarView('view-registro');
+    } else if (usuarioActual.rol === 'encargado') {
+      mostrarEncargado();
+    } else {
+      mostrarView('view-admin');
+      renderAdmin();
+    }
+  }
+
+  actualizarHeader();
+}
+
+function mostrarView(id) {
+  ['view-registro','view-admin','view-encargado','view-checkin'].forEach(v => {
+    const el = document.getElementById(v);
+    el.classList.remove('active');
+    el.style.display = 'none';
+  });
+  const target = document.getElementById(id);
+  target.style.display = '';
+  target.classList.add('active');
+}
+
+function actualizarHeader() {
+  const hu = document.getElementById('header-user');
+  if (usuarioActual) {
+    hu.style.display = 'flex';
+    document.getElementById('header-avatar').textContent = usuarioActual.nombre.charAt(0).toUpperCase();
+    document.getElementById('header-name').textContent = usuarioActual.nombre;
+  } else {
+    hu.style.display = 'none';
+  }
+}
+
+// ── REGISTRO ──
+function registrarUsuario() {
+  const nombre = document.getElementById('reg-nombre').value.trim();
+  const dni = document.getElementById('reg-dni').value.trim();
+  const sucursal = document.getElementById('reg-sucursal').value;
+  const errEl = document.getElementById('reg-error');
+
+  if (!nombre || !dni || !sucursal) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Por favor completá todos los campos.';
+    return;
+  }
+  if (dni.length < 7 || dni.length > 8) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'El DNI debe tener entre 7 y 8 dígitos.';
+    return;
+  }
+
+  // Buscar si coincide con algún empleado válido (por nombre aproximado y sucursal)
+  const nombreLower = nombre.toLowerCase().trim();
+  const match = EMPLEADOS_VALIDOS.find(e =>
+    e.sucursal === sucursal &&
+    (e.nombre.toLowerCase() === nombreLower || nombreLower.includes(e.nombre.toLowerCase()))
+  );
+
+  if (!match) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'No encontramos tu nombre en esa sucursal. Verificá con tu encargado.';
+    return;
+  }
+
+  errEl.style.display = 'none';
+  usuarioActual = {
+    nombre: match.nombre,
+    dni,
+    sucursal,
+    rol: match.rol
+  };
+  localStorage.setItem('halcon_usuario', JSON.stringify(usuarioActual));
+  actualizarHeader();
+  showToast('¡Registro exitoso! Bienvenido/a, ' + match.nombre);
+
+  setTimeout(() => {
+    if (sucursalActiva) {
+      mostrarCheckin(sucursalActiva);
+    } else if (usuarioActual.rol === 'encargado') {
+      mostrarEncargado();
+    } else {
+      mostrarView('view-admin');
+      renderAdmin();
+    }
+  }, 800);
+}
+
+// ── CERRAR SESION ──
+function cerrarSesion() {
+  if (!confirm('¿Cerrar sesión? Vas a tener que volver a registrarte.')) return;
+  localStorage.removeItem('halcon_usuario');
+  usuarioActual = null;
+  actualizarHeader();
+  mostrarView('view-registro');
+  document.getElementById('reg-sucursal').disabled = false;
+}
+
+// ── ADMIN (QR panel) ──
 function renderAdmin() {
   const grid = document.getElementById('branches-grid');
   grid.innerHTML = '';
   SUCURSALES.forEach(s => {
-    const url = qrUrl(s.id);
+    const url = BASE_URL + '?s=' + s.id;
     const card = document.createElement('div');
     card.className = 'branch-card';
     card.innerHTML = `
@@ -142,7 +382,7 @@ function renderAdmin() {
       <div class="branch-addr">${s.direccion}</div>
       <div class="qr-box" id="qr-${s.id}"></div>
       <div class="qr-url">${url}</div>
-      <button class="btn-sim" onclick="irA('${s.id}')">▶ Simular escaneo</button>
+      <button class="btn-sim" onclick="simScan('${s.id}')">▶ Simular escaneo</button>
     `;
     grid.appendChild(card);
     setTimeout(() => {
@@ -153,33 +393,86 @@ function renderAdmin() {
   });
 }
 
-function irA(id) { history.pushState({}, '', '?s=' + id); route(); }
-function volverAdmin() { history.pushState({}, '', BASE_URL); route(); }
-
-function route() {
-  const id = new URLSearchParams(window.location.search).get('s');
-  if (!id) {
-    document.getElementById('admin-view').style.display = '';
-    document.getElementById('checkin-view').style.display = 'none';
-    return;
-  }
-  const s = SUCURSALES.find(x => x.id === id);
-  if (!s) { volverAdmin(); return; }
-  sucursalActiva = s;
-  mostrarCheckin(s);
+function simScan(id) {
+  history.pushState({}, '', '?s=' + id);
+  sucursalActiva = SUCURSALES.find(x => x.id === id);
+  if (!usuarioActual) { mostrarView('view-registro'); return; }
+  mostrarCheckin(sucursalActiva);
 }
 
-function mostrarCheckin(s) {
-  document.getElementById('admin-view').style.display = 'none';
-  document.getElementById('checkin-view').style.display = 'flex';
+// ── ENCARGADO ──
+function mostrarEncargado() {
+  mostrarView('view-encargado');
+  const s = SUCURSALES.find(x => x.id === usuarioActual.sucursal);
+  document.getElementById('enc-titulo').textContent = 'Registros — ' + (s ? s.nombre : '');
+  document.getElementById('enc-subtitulo').textContent = 'Encargado: ' + usuarioActual.nombre;
+  filtrarHoy();
+}
+
+function filtrarHoy() {
+  const hoy = new Date().toLocaleDateString('es-AR');
+  document.getElementById('enc-fecha').value = new Date().toISOString().split('T')[0];
+  renderEncargado();
+}
+
+function renderEncargado() {
+  const fechaInput = document.getElementById('enc-fecha').value;
+  let fechaFiltro = '';
+  if (fechaInput) {
+    const d = new Date(fechaInput + 'T12:00:00');
+    fechaFiltro = d.toLocaleDateString('es-AR');
+  }
+
+  const items = registros.filter(r =>
+    r.sucursal === usuarioActual.sucursal &&
+    (!fechaFiltro || r.fecha === fechaFiltro)
+  );
+
+  const tabla = document.getElementById('enc-tabla');
+  if (!items.length) {
+    tabla.innerHTML = '<div class="empty-state">No hay registros para esta fecha.</div>';
+    return;
+  }
+
+  tabla.innerHTML = `
+    <div class="table-header">
+      <div>Empleado</div>
+      <div>Fecha</div>
+      <div>Hora</div>
+      <div>Tipo</div>
+    </div>
+    ${items.map(r => `
+      <div class="table-row">
+        <div>${r.empleado}</div>
+        <div style="font-size:12px;color:var(--muted)">${r.fecha}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:13px">${r.hora}</div>
+        <div><span class="tag ${r.tipo === 'entrada' ? 'tag-ent' : 'tag-sal'}">${r.tipo === 'entrada' ? 'Entrada' : 'Salida'}</span></div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ── CHECKIN ──
+function mostrarCheckin(s, forzado = false) {
+  mostrarView('view-checkin');
+  document.getElementById('view-checkin').style.display = 'flex';
   document.getElementById('ci-name').textContent = s.nombre;
   document.getElementById('ci-addr').textContent = s.direccion;
+  document.getElementById('ci-empleado').textContent = usuarioActual ? usuarioActual.nombre : '—';
   document.getElementById('btn-entrada').disabled = true;
   document.getElementById('btn-salida').disabled = true;
   setLoc('wait', 'Verificando ubicación GPS...');
   gpsOk = false;
   obtenerGPS(s);
-  renderRegistros(s.id);
+  renderMisRegistros(s.id);
+}
+
+function volverInicio() {
+  history.pushState({}, '', BASE_URL);
+  sucursalActiva = null;
+  if (!usuarioActual) { mostrarView('view-registro'); return; }
+  if (usuarioActual.rol === 'encargado') { mostrarEncargado(); }
+  else { mostrarView('view-admin'); renderAdmin(); }
 }
 
 function setLoc(estado, msg) {
@@ -189,9 +482,9 @@ function setLoc(estado, msg) {
 
 function distancia(la1, lo1, la2, lo2) {
   const R = 6371000, r = Math.PI / 180;
-  const dLa = (la2 - la1) * r, dLo = (lo2 - lo1) * r;
-  const a = Math.sin(dLa/2)**2 + Math.cos(la1*r) * Math.cos(la2*r) * Math.sin(dLo/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const dLa = (la2-la1)*r, dLo = (lo2-lo1)*r;
+  const a = Math.sin(dLa/2)**2 + Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
 function obtenerGPS(s) {
@@ -215,31 +508,45 @@ function obtenerGPS(s) {
 }
 
 function fichar(tipo) {
-  const nombre = document.getElementById('empleado-input').value.trim();
-  if (!nombre) { showToast('Ingresá tu nombre y apellido'); return; }
-  if (!gpsOk) return;
+  if (!gpsOk || !usuarioActual) return;
   const now = new Date();
   registros.unshift({
-    id: Date.now(), sucursal: sucursalActiva.id, empleado: nombre, tipo,
+    id: Date.now(),
+    sucursal: sucursalActiva.id,
+    empleado: usuarioActual.nombre,
+    dni: usuarioActual.dni,
+    tipo,
     hora: now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
     fecha: now.toLocaleDateString('es-AR')
   });
   localStorage.setItem('halcon_registros', JSON.stringify(registros));
-  renderRegistros(sucursalActiva.id);
+  renderMisRegistros(sucursalActiva.id);
   showToast(tipo === 'entrada' ? '✓ Entrada registrada' : '✓ Salida registrada');
+  // Deshabilitar botones hasta nuevo escaneo
+  document.getElementById('btn-entrada').disabled = true;
+  document.getElementById('btn-salida').disabled = true;
+  gpsOk = false;
+  setLoc('ok', tipo === 'entrada' ? '✓ Entrada registrada correctamente' : '✓ Salida registrada correctamente');
 }
 
-function renderRegistros(sid) {
+function renderMisRegistros(sid) {
   const hoy = new Date().toLocaleDateString('es-AR');
-  const items = registros.filter(r => r.sucursal === sid && r.fecha === hoy);
+  const items = registros.filter(r =>
+    r.sucursal === sid &&
+    r.fecha === hoy &&
+    (!usuarioActual || r.empleado === usuarioActual.nombre)
+  );
   const wrap = document.getElementById('registros-wrap');
   const cont = document.getElementById('reg-items');
   if (!items.length) { wrap.style.display = 'none'; return; }
   wrap.style.display = '';
   cont.innerHTML = items.map(r => `
     <div class="reg-item">
-      <div><div class="reg-name">${r.empleado}</div><div class="reg-meta">${r.fecha} — ${r.hora}</div></div>
-      <span class="tag ${r.tipo === 'entrada' ? 'tag-ent' : 'tag-sal'}">${r.tipo === 'entrada' ? 'Entrada' : 'Salida'}</span>
+      <div><div class="reg-name">${r.empleado}</div><div class="reg-meta">${r.fecha}</div></div>
+      <div style="text-align:right">
+        <div style="font-family:'DM Mono',monospace;font-size:13px">${r.hora}</div>
+        <span class="tag ${r.tipo === 'entrada' ? 'tag-ent' : 'tag-sal'}">${r.tipo === 'entrada' ? 'Entrada' : 'Salida'}</span>
+      </div>
     </div>
   `).join('');
 }
@@ -252,9 +559,8 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-renderAdmin();
-route();
-window.addEventListener('popstate', route);
+init();
+window.addEventListener('popstate', init);
 </script>
 </body>
 </html>
