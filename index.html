@@ -428,6 +428,7 @@ window.renderEncargado = function() {
   document.getElementById('enc-loading').style.display = 'block';
   document.getElementById('enc-tabla').innerHTML = '';
 
+  // Traer TODOS los registros de la sucursal sin filtrar por empleado
   const r = ref(db, 'registros');
   const q = query(r, orderByChild('sucursal'), equalTo(usuarioActual.sucursal));
 
@@ -436,6 +437,7 @@ window.renderEncargado = function() {
     const items = [];
     snapshot.forEach(child => {
       const d = child.val();
+      // Solo filtrar por fecha, NO por empleado
       if (d.fecha === fechaFiltro) items.push(d);
     });
     items.sort((a,b) => b.id - a.id);
