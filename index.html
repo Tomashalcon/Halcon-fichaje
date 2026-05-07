@@ -260,10 +260,10 @@ const EMPLEADOS_VALIDOS = [
   { nombre: 'Abel Torrico',       dni: '44094443', sucursal: 'lomas',   rol: 'encargado' },
   { nombre: 'Marcos Ramos',       dni: '43103370', sucursal: 'lomas',   rol: 'empleado'  },
   { nombre: 'Alan Escalante',     dni: '43860645', sucursal: 'lomas',   rol: 'empleado'  },
-  { nombre: 'Bento Marina',       dni: '39099498', sucursal: 'laplata', rol: 'encargado' },
-  { nombre: 'Acosta Teo',         dni: '47954010', sucursal: 'laplata', rol: 'empleado'  },
-  { nombre: 'Luquez Milagros',    dni: '42627557', sucursal: 'laplata', rol: 'empleado'  },
-  { nombre: 'Tejeda Julian',      dni: '41195459', sucursal: 'laplata', rol: 'empleado'  },
+  { nombre: 'Marina Bento',       dni: '39099498', sucursal: 'laplata', rol: 'encargado' },
+  { nombre: 'Teo Acosta',         dni: '47954010', sucursal: 'laplata', rol: 'empleado'  },
+  { nombre: 'Milagros Luquez',    dni: '42627557', sucursal: 'laplata', rol: 'empleado'  },
+  { nombre: 'Julian Tejeda',      dni: '41195459', sucursal: 'laplata', rol: 'empleado'  },
 ];
 
 let usuarioActual = JSON.parse(localStorage.getItem('halcon_usuario') || 'null');
@@ -315,13 +315,23 @@ function fechaHoy() {
 
 // ── INIT ──
 function init() {
-  const sid = new URLSearchParams(window.location.search).get('s');
+  const params = new URLSearchParams(window.location.search);
+  const sid = params.get('s');
+  const ts = params.get('t'); // timestamp del escaneo
   actualizarHeader();
 
   if (sid) {
     const s = SUCURSALES.find(x => x.id === sid);
     if (!s) { goInicio(); return; }
     sucursalActiva = s;
+
+    // Si no tiene timestamp, redirigir con uno para forzar recarga fresca en iPhone
+    if (!ts) {
+      const newUrl = BASE_URL + '?s=' + sid + '&t=' + Date.now();
+      window.location.replace(newUrl);
+      return;
+    }
+
     if (!usuarioActual) {
       mostrarView('view-registro');
       const sel = document.getElementById('reg-sucursal');
@@ -477,15 +487,19 @@ function mostrarCheckin(s) {
   document.getElementById('ci-name').textContent = s.nombre;
   document.getElementById('ci-addr').textContent = s.direccion;
   document.getElementById('ci-empleado').textContent = usuarioActual ? usuarioActual.nombre : '—';
-  gpsOk = false;
 
-  // Cargar mis registros de hoy para saber si el próximo es entrada o salida
+  // Siempre resetear estado al llegar por QR
+  gpsOk = false;
+  document.getElementById('btn-fichar').disabled = true;
+  setLoc('wait', 'Verificando ubicación GPS...');
+
+  // Cargar registros para determinar entrada o salida
   cargarMisRegistros(s.id, () => {
     actualizarBotonFichar();
     document.getElementById('btn-fichar').disabled = true; // esperar GPS
   });
 
-  setLoc('wait', 'Verificando ubicación GPS...');
+  // Iniciar GPS fresco
   obtenerGPS(s);
 }
 
