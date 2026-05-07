@@ -255,15 +255,15 @@ const SUCURSALES = [
 ];
 
 const EMPLEADOS_VALIDOS = [
-  { nombre: 'Francisco', sucursal: 'quilmes', rol: 'empleado' },
-  { nombre: 'Tomas',     sucursal: 'quilmes', rol: 'encargado' },
-  { nombre: 'Alan',      sucursal: 'lomas',   rol: 'empleado' },
-  { nombre: 'Marcos',    sucursal: 'lomas',   rol: 'empleado' },
-  { nombre: 'Abel',      sucursal: 'lomas',   rol: 'encargado' },
-  { nombre: 'Marina',    sucursal: 'laplata', rol: 'encargado' },
-  { nombre: 'Milagros',  sucursal: 'laplata', rol: 'empleado' },
-  { nombre: 'Teo',       sucursal: 'laplata', rol: 'empleado' },
-  { nombre: 'Julian',    sucursal: 'laplata', rol: 'empleado' },
+  { nombre: 'Tomas Aguirre',      dni: '42089022', sucursal: 'quilmes', rol: 'encargado' },
+  { nombre: 'Francisco Mamondez', dni: '42346915', sucursal: 'quilmes', rol: 'empleado'  },
+  { nombre: 'Abel Torrico',       dni: '44094443', sucursal: 'lomas',   rol: 'encargado' },
+  { nombre: 'Marcos Ramos',       dni: '43103370', sucursal: 'lomas',   rol: 'empleado'  },
+  { nombre: 'Alan Escalante',     dni: '43860645', sucursal: 'lomas',   rol: 'empleado'  },
+  { nombre: 'Bento Marina',       dni: '39099498', sucursal: 'laplata', rol: 'encargado' },
+  { nombre: 'Acosta Teo',         dni: '47954010', sucursal: 'laplata', rol: 'empleado'  },
+  { nombre: 'Luquez Milagros',    dni: '42627557', sucursal: 'laplata', rol: 'empleado'  },
+  { nombre: 'Tejeda Julian',      dni: '41195459', sucursal: 'laplata', rol: 'empleado'  },
 ];
 
 let usuarioActual = JSON.parse(localStorage.getItem('halcon_usuario') || 'null');
@@ -348,15 +348,25 @@ window.registrarUsuario = function() {
   const errEl  = document.getElementById('reg-error');
 
   if (!nombre || !dni || !suc) { errEl.style.display='block'; errEl.textContent='Por favor completá todos los campos.'; return; }
-  if (dni.length < 7 || dni.length > 8) { errEl.style.display='block'; errEl.textContent='El DNI debe tener entre 7 y 8 dígitos.'; return; }
+  if (dni.replace(/\D/g,'').length < 7) { errEl.style.display='block'; errEl.textContent='DNI inválido.'; return; }
 
-  const match = EMPLEADOS_VALIDOS.find(e =>
+  const dniLimpio = dni.replace(/\D/g,'');
+
+  // Buscar por nombre Y DNI en la sucursal correcta
+  const matchNombre = EMPLEADOS_VALIDOS.find(e =>
     e.sucursal === suc && e.nombre.toLowerCase() === nombre.toLowerCase()
   );
-  if (!match) { errEl.style.display='block'; errEl.textContent='No encontramos tu nombre en esa sucursal. Verificá con tu encargado.'; return; }
+  if (!matchNombre) { errEl.style.display='block'; errEl.textContent='No encontramos tu nombre en esa sucursal. Verificá con tu encargado.'; return; }
+
+  const match = EMPLEADOS_VALIDOS.find(e =>
+    e.sucursal === suc &&
+    e.nombre.toLowerCase() === nombre.toLowerCase() &&
+    e.dni === dniLimpio
+  );
+  if (!match) { errEl.style.display='block'; errEl.textContent='El DNI no coincide con el nombre ingresado.'; return; }
 
   errEl.style.display = 'none';
-  usuarioActual = { nombre: match.nombre, dni, sucursal: suc, rol: match.rol };
+  usuarioActual = { nombre: match.nombre, dni: dniLimpio, sucursal: suc, rol: match.rol };
   localStorage.setItem('halcon_usuario', JSON.stringify(usuarioActual));
   actualizarHeader();
   showToast('¡Bienvenido/a, ' + match.nombre + '!');
