@@ -580,10 +580,15 @@ window.fichar = function() {
   };
 
   push(ref(db, 'registros'), registro).then(() => {
-    showToast(mensaje);
+    // Mensajes solo para Quilmes y Lomas, no para La Plata
+    if (sucursalActiva.id !== 'laplata') {
+      showToast(mensaje);
+      setLoc('ok', mensaje);
+    } else {
+      setLoc('ok', tipo === 'entrada' ? '✓ Entrada registrada' : '✓ Salida registrada');
+    }
     document.getElementById('btn-fichar').disabled = true;
     gpsOk = false;
-    setLoc('ok', mensaje);
   }).catch(() => {
     showToast('Error al guardar. Verificá tu conexión.');
   });
