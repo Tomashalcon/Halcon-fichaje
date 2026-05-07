@@ -299,7 +299,7 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 4500);
 }
 
 function distancia(la1, lo1, la2, lo2) {
@@ -518,10 +518,43 @@ function actualizarBotonFichar() {
   window._proximoTipo = proximoTipo;
 }
 
+function getMensaje(tipo, now, nombre) {
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const totalMin = h * 60 + m;
+  const primerNombre = nombre.split(' ')[0];
+
+  if (tipo === 'entrada') {
+    if (totalMin < 630) {
+      // Antes de 10:30
+      return '¡Buenos días, ' + primerNombre + '! ☀️ Que tengas una linda jornada!';
+    } else if (totalMin <= 660) {
+      // Entre 10:30 y 11:00
+      return 'Nadie vio nada... por esta vez 👀😏';
+    } else {
+      // Después de 11:00
+      return 'Llegaste tarde ' + primerNombre + ', pero bueno... ya estás acá 😅';
+    }
+  } else {
+    // Salida
+    if (totalMin < 1125) {
+      // Antes de 18:45
+      return 'Te vas tempranito hoy 👋 ¡Hasta mañana, ' + primerNombre + '!';
+    } else if (totalMin <= 1155) {
+      // Entre 18:45 y 19:15
+      return '¡Hora exacta! 🎯 Que tengas buenas noches, ' + primerNombre + '!';
+    } else {
+      // Después de 19:15
+      return '¡Que tengas buenas noches, ' + primerNombre + '! 🌙';
+    }
+  }
+}
+
 window.fichar = function() {
   if (!gpsOk || !usuarioActual) return;
   const tipo = window._proximoTipo || 'entrada';
   const now = new Date();
+  const mensaje = getMensaje(tipo, now, usuarioActual.nombre);
   const registro = {
     id: now.getTime(),
     sucursal: sucursalActiva.id,
@@ -533,11 +566,10 @@ window.fichar = function() {
   };
 
   push(ref(db, 'registros'), registro).then(() => {
-    showToast(tipo === 'entrada' ? '✓ Entrada registrada' : '✓ Salida registrada');
-    // Deshabilitar hasta nuevo escaneo
+    showToast(mensaje);
     document.getElementById('btn-fichar').disabled = true;
     gpsOk = false;
-    setLoc('ok', tipo === 'entrada' ? '✓ Entrada registrada. Hasta luego!' : '✓ Salida registrada. ¡Hasta mañana!');
+    setLoc('ok', mensaje);
   }).catch(() => {
     showToast('Error al guardar. Verificá tu conexión.');
   });
