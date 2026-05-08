@@ -105,6 +105,8 @@
       letter-spacing: -0.01em;
     }
     .btn-fichar:disabled { opacity: 0.4; cursor: not-allowed; }
+    .rescan-msg { width: 100%; max-width: 380px; text-align: center; font-size: 13px; color: var(--muted); padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); display: none; }
+    .rescan-msg.show { display: block; }
     .btn-fichar:not(:disabled):active { transform: scale(0.97); }
     .btn-fichar.entrada { background: var(--accent); color: white; }
     .btn-fichar.salida { background: var(--accent2); color: white; }
@@ -213,9 +215,10 @@
     <span id="loc-text">Verificando ubicación GPS...</span>
   </div>
 
-  <button class="btn-fichar entrada" id="btn-fichar" disabled onclick="fichar()">
+  <button class="btn-fichar entrada" id="btn-fichar" disabled onclick="fichar()" ontouchstart="mostrarMensajeRescan()" onmousedown="mostrarMensajeRescan()">
     <span id="btn-fichar-label">↑ Registrar entrada</span>
   </button>
+  <div class="rescan-msg" id="rescan-msg">📷 Para fichar, escaneá el QR de nuevo</div>
 
   <div class="registros-wrap" id="registros-wrap" style="display:none;">
     <div class="reg-header-row">Tus registros de hoy</div>
@@ -627,6 +630,7 @@ function obtenerGPS(s) {
         gpsOk = true;
         setLoc('ok', `Ubicación verificada ✓ — estás a ${dm}m del local`);
         document.getElementById('btn-fichar').disabled = false;
+        document.getElementById('rescan-msg').classList.remove('show');
       } else {
         setLoc('err', `Fuera de rango — estás a ${dm}m del local (máx. ${RADIO}m)`);
       }
@@ -635,6 +639,15 @@ function obtenerGPS(s) {
     { enableHighAccuracy: true, timeout: 12000 }
   );
 }
+
+window.mostrarMensajeRescan = function() {
+  const btn = document.getElementById('btn-fichar');
+  if (btn.disabled) {
+    const msg = document.getElementById('rescan-msg');
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 3000);
+  }
+};
 
 window.volverInicio = function() {
   history.pushState({}, '', BASE_URL);
