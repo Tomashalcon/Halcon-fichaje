@@ -236,7 +236,7 @@
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, query, orderByChild, equalTo, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA5LHfzVf-jcTCf4GtTqD8CmJjziTLcu-M",
@@ -272,11 +272,32 @@ const EMPLEADOS_VALIDOS = [
   { nombre: 'Julian Tejeda',      dni: '41195459', sucursal: 'laplata', rol: 'empleado'  },
 ];
 
-let usuarioActual = JSON.parse(localStorage.getItem('halcon_usuario') || 'null');
+let usuarioActual = null;
 let sucursalActiva = null;
 let gpsOk = false;
 let encListenerOff = null;
 let misRegistrosHoy = [];
+
+// Leer sesión: primero localStorage, si no hay buscar por DNI guardado
+const _dniGuardado = localStorage.getItem('halcon_dni');
+
+async function cargarSesion() {
+  // Intentar desde localStorage primero (Android/Chrome)
+  const local = localStorage.getItem('halcon_usuario');
+  if (local) {
+    try { usuarioActual = JSON.parse(local); return; } catch(e) {}
+  }
+  // Si hay DNI guardado, buscar usuario en Firebase
+  if (_dniGuardado) {
+    try {
+      const snap = await get(ref(db, 'usuarios/' + _dniGuardado));
+      if (snap.exists()) {
+        usuarioActual = snap.val();
+        localStorage.setItem('halcon_usuario', JSON.stringify(usuarioActual));
+      }
+    } catch(e) {}
+  }
+}
 
 // ── UTILS ──
 function mostrarView(id) {
@@ -320,7 +341,8 @@ function fechaHoy() {
 }
 
 // ── INIT ──
-function init() {
+async function init() {
+  await cargarSesion();
   const params = new URLSearchParams(window.location.search);
   const sid = params.get('s');
   const ts = params.get('t'); // timestamp del escaneo
@@ -393,7 +415,11 @@ window.registrarUsuario = function() {
 
   errEl.style.display = 'none';
   usuarioActual = { nombre: match.nombre, dni: dniLimpio, sucursal: suc, rol: match.rol };
+  // Guardar en localStorage Y en Firebase para recuperar sesión en Safari/iPhone
   localStorage.setItem('halcon_usuario', JSON.stringify(usuarioActual));
+  localStorage.setItem('halcon_dni', dniLimpio);
+  // Guardar en Firebase usando DNI como clave
+  set(ref(db, 'usuarios/' + dniLimpio), usuarioActual).catch(() => {});
   actualizarHeader();
   showToast('¡Bienvenido/a, ' + match.nombre + '!');
   setTimeout(() => {
@@ -406,6 +432,7 @@ window.registrarUsuario = function() {
 window.cerrarSesion = function() {
   if (!confirm('¿Cerrar sesión?')) return;
   localStorage.removeItem('halcon_usuario');
+  localStorage.removeItem('halcon_dni');
   usuarioActual = null;
   actualizarHeader();
   document.getElementById('reg-sucursal').disabled = false;
