@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Halcon Supplies — Fichaje</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
   <style>
@@ -328,11 +331,21 @@ function init() {
     if (!s) { goInicio(); return; }
     sucursalActiva = s;
 
-    // Si no tiene timestamp, redirigir con uno para forzar recarga fresca en iPhone
+    // Forzar recarga completa para evitar caché de Google App / Safari
     if (!ts) {
       const newUrl = BASE_URL + '?s=' + sid + '&t=' + Date.now();
       window.location.replace(newUrl);
       return;
+    }
+
+    // Si ya tiene timestamp pero la página no se recargó limpia, forzar reload
+    const pageLoadTime = window.performance && window.performance.navigation
+      ? window.performance.navigation.type
+      : -1;
+    // Limpiar estado residual siempre
+    gpsOk = false;
+    if (document.getElementById('btn-fichar')) {
+      document.getElementById('btn-fichar').disabled = true;
     }
 
     if (!usuarioActual) {
@@ -663,6 +676,20 @@ s.onload = init;
 document.head.appendChild(s);
 
 window.addEventListener('popstate', init);
+
+// Re-verificar estado cuando el usuario vuelve a la pestaña (fix Google App / Safari)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    const sid = new URLSearchParams(window.location.search).get('s');
+    if (sid && sucursalActiva) {
+      // Resetear y re-verificar GPS
+      gpsOk = false;
+      document.getElementById('btn-fichar').disabled = true;
+      setLoc('wait', 'Verificando ubicación GPS...');
+      obtenerGPS(sucursalActiva);
+    }
+  }
+});
 </script>
 </body>
 </html>
