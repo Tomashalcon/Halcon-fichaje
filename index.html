@@ -74,8 +74,14 @@
     .tag-ent { background: var(--accent-light); color: var(--accent); }
     .tag-sal { background: var(--accent2-light); color: var(--accent2); }
     .empty-state { padding: 2rem; text-align: center; color: var(--muted); font-size: 14px; }
-    .date-filter { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
-    .date-filter input { padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); outline: none; }
+    .date-filter { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; }
+    .date-range-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .date-range-group { display: flex; flex-direction: column; gap: 4px; }
+    .date-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .date-range-group input { padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); outline: none; }
+    .date-range-group input:focus { border-color: var(--accent); }
+    .date-range-sep { font-size: 16px; color: var(--muted); margin-top: 18px; }
+    .date-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .btn-sec { padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius); cursor: pointer; }
     .btn-sec:hover { background: var(--surface2); }
 
@@ -190,10 +196,32 @@
     <h2 id="enc-titulo">Registros</h2>
     <p id="enc-subtitulo" style="color:var(--muted);font-size:13px;margin-top:4px;"></p>
   </div>
+  <div id="suc-selector-wrap" style="display:none; align-items:center; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
+    <label style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Sucursal</label>
+    <select id="suc-selector" onchange="renderEncargado()" style="padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);outline:none;">
+      <option value="">Todas</option>
+      <option value="quilmes">Quilmes</option>
+      <option value="lomas">Lomas de Zamora</option>
+      <option value="laplata">La Plata</option>
+    </select>
+  </div>
   <div class="date-filter">
-    <input type="date" id="enc-fecha" />
-    <button class="btn-sec" onclick="renderEncargado()">Filtrar</button>
-    <button class="btn-sec" onclick="filtrarHoy()">Hoy</button>
+    <div class="date-range-wrap">
+      <div class="date-range-group">
+        <label class="date-label">Desde</label>
+        <input type="date" id="enc-fecha-desde" />
+      </div>
+      <div class="date-range-sep">→</div>
+      <div class="date-range-group">
+        <label class="date-label">Hasta</label>
+        <input type="date" id="enc-fecha-hasta" />
+      </div>
+    </div>
+    <div class="date-btns">
+      <button class="btn-sec" onclick="filtrarHoy()">Hoy</button>
+      <button class="btn-sec" onclick="filtrarSemana()">Esta semana</button>
+      <button class="btn-primary btn-filtrar" onclick="renderEncargado()">Filtrar</button>
+    </div>
   </div>
   <div id="enc-loading" style="display:none;"><div class="spinner"></div></div>
   <div class="registros-table" id="enc-tabla"></div>
@@ -261,7 +289,7 @@ const SUCURSALES = [
 ];
 
 const EMPLEADOS_VALIDOS = [
-  { nombre: 'Tomas Aguirre',      dni: '42089022', sucursal: 'quilmes', rol: 'encargado' },
+  { nombre: 'Tomas Aguirre',      dni: '42089022', sucursal: 'quilmes', rol: 'superencargado' },
   { nombre: 'Francisco Mamondez', dni: '42346915', sucursal: 'quilmes', rol: 'empleado'  },
   { nombre: 'Facundo De Leon',     dni: '41922453', sucursal: 'quilmes', rol: 'empleado'  },
   { nombre: 'Abel Torrico',       dni: '44094443', sucursal: 'lomas',   rol: 'encargado' },
@@ -385,7 +413,7 @@ async function init() {
 
 function goInicio() {
   if (!usuarioActual) { mostrarView('view-registro'); return; }
-  if (usuarioActual.rol === 'encargado') { mostrarEncargado(); }
+  if (usuarioActual.rol === 'encargado' || usuarioActual.rol === 'superencargado') { mostrarEncargado(); }
   else { mostrarView('view-admin'); renderAdmin(); }
 }
 
@@ -468,41 +496,76 @@ function renderAdmin() {
 // ── ENCARGADO ──
 function mostrarEncargado() {
   mostrarView('view-encargado');
-  const s = SUCURSALES.find(x => x.id === usuarioActual.sucursal);
-  document.getElementById('enc-titulo').textContent = 'Registros — ' + (s ? s.nombre : '');
-  document.getElementById('enc-subtitulo').textContent = 'Encargado: ' + usuarioActual.nombre;
+  document.getElementById('enc-subtitulo').textContent = usuarioActual.nombre;
+
+  if (usuarioActual.rol === 'superencargado') {
+    document.getElementById('enc-titulo').textContent = 'Registros — Todas las sucursales';
+    // Mostrar selector de sucursal
+    document.getElementById('suc-selector-wrap').style.display = 'flex';
+    document.getElementById('suc-selector').value = '';
+  } else {
+    const s = SUCURSALES.find(x => x.id === usuarioActual.sucursal);
+    document.getElementById('enc-titulo').textContent = 'Registros — ' + (s ? s.nombre : '');
+    document.getElementById('suc-selector-wrap').style.display = 'none';
+  }
   filtrarHoy();
 }
 
 window.filtrarHoy = function() {
-  document.getElementById('enc-fecha').value = new Date().toISOString().split('T')[0];
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('enc-fecha-desde').value = hoy;
+  document.getElementById('enc-fecha-hasta').value = hoy;
   renderEncargado();
 };
 
+window.filtrarSemana = function() {
+  const hoy = new Date();
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
+  document.getElementById('enc-fecha-desde').value = lunes.toISOString().split('T')[0];
+  document.getElementById('enc-fecha-hasta').value = hoy.toISOString().split('T')[0];
+  renderEncargado();
+};
+
+function parseFechaAR(str) {
+  // Convierte dd/mm/yyyy a objeto Date
+  const [d, m, y] = str.split('/');
+  return new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+}
+
 window.renderEncargado = function() {
-  const fechaInput = document.getElementById('enc-fecha').value;
-  let fechaFiltro = fechaHoy();
-  if (fechaInput) {
-    const d = new Date(fechaInput + 'T12:00:00');
-    fechaFiltro = d.toLocaleDateString('es-AR');
-  }
+  const desdeInput = document.getElementById('enc-fecha-desde').value;
+  const hastaInput = document.getElementById('enc-fecha-hasta').value;
+
+  // Calcular rango
+  const desdeDate = desdeInput ? new Date(desdeInput + 'T00:00:00') : null;
+  const hastaDate = hastaInput ? new Date(hastaInput + 'T23:59:59') : null;
 
   if (encListenerOff) { encListenerOff(); encListenerOff = null; }
 
   document.getElementById('enc-loading').style.display = 'block';
   document.getElementById('enc-tabla').innerHTML = '';
 
-  // Traer TODOS los registros de la sucursal sin filtrar por empleado
+  // Superencargado puede filtrar por sucursal o ver todas
+  const sucFiltro = usuarioActual.rol === 'superencargado'
+    ? (document.getElementById('suc-selector').value || null)
+    : usuarioActual.sucursal;
+
   const r = ref(db, 'registros');
-  const q = query(r, orderByChild('sucursal'), equalTo(usuarioActual.sucursal));
+  const q = sucFiltro
+    ? query(r, orderByChild('sucursal'), equalTo(sucFiltro))
+    : query(r, orderByChild('sucursal'));
 
   encListenerOff = onValue(q, snapshot => {
     document.getElementById('enc-loading').style.display = 'none';
     const items = [];
     snapshot.forEach(child => {
       const d = child.val();
-      // Solo filtrar por fecha, NO por empleado
-      if (d.fecha === fechaFiltro) items.push(d);
+      const fechaReg = parseFechaAR(d.fecha);
+      const dentroRango =
+        (!desdeDate || fechaReg >= desdeDate) &&
+        (!hastaDate || fechaReg <= hastaDate);
+      if (dentroRango) items.push(d);
     });
     items.sort((a,b) => b.id - a.id);
 
@@ -511,11 +574,18 @@ window.renderEncargado = function() {
       tabla.innerHTML = '<div class="empty-state">No hay registros para esta fecha.</div>';
       return;
     }
+    const esSuperEnc = usuarioActual.rol === 'superencargado' && !sucFiltro;
+    const sucNombres = { quilmes: 'Quilmes', lomas: 'Lomas', laplata: 'La Plata' };
     tabla.innerHTML = `
-      <div class="table-header"><div>Empleado</div><div>Fecha</div><div>Hora</div><div>Tipo</div></div>
+      <div class="table-header" style="grid-template-columns:${esSuperEnc ? '1fr 90px 80px 80px 90px' : '1fr 80px 80px 90px'}">
+        <div>Empleado</div>
+        ${esSuperEnc ? '<div>Sucursal</div>' : ''}
+        <div>Fecha</div><div>Hora</div><div>Tipo</div>
+      </div>
       ${items.map(r => `
-        <div class="table-row">
+        <div class="table-row" style="grid-template-columns:${esSuperEnc ? '1fr 90px 80px 80px 90px' : '1fr 80px 80px 90px'}">
           <div>${r.empleado}</div>
+          ${esSuperEnc ? `<div style="font-size:12px;color:var(--muted)">${sucNombres[r.sucursal] || r.sucursal}</div>` : ''}
           <div style="font-size:12px;color:var(--muted)">${r.fecha}</div>
           <div style="font-family:'DM Mono',monospace;font-size:13px">${r.hora}</div>
           <div><span class="tag ${r.tipo==='entrada'?'tag-ent':'tag-sal'}">${r.tipo==='entrada'?'Entrada':'Salida'}</span></div>
